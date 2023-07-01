@@ -32,7 +32,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          git clone https://github.com/tihmstar/libgeneral.git
+          git clone https://github.com/tihmstar/libgeneral.git -b 64
           cd libgeneral
           ./autogen.sh --prefix=/usr
           make
