@@ -20,6 +20,7 @@ class WIFIDevice : public Device, tihmstar::Manager {
     std::weak_ptr<WIFIDevice> _selfref;
     std::string _ipaddr;
     std::string _serviceName;
+    bool _paired;
     heartbeat_client_t _hbclient;
     plist_t _hbrsp;
     idevice_t _idev;
@@ -28,7 +29,7 @@ class WIFIDevice : public Device, tihmstar::Manager {
     virtual void beforeLoop() override;
 
 public:
-    WIFIDevice(std::string uuid, std::string ipaddr, std::string serviceName, std::shared_ptr<gref_Muxer> mux);
+    WIFIDevice(std::string uuid, std::string ipaddr, std::string serviceName, bool paired, std::shared_ptr<gref_Muxer> mux);
     WIFIDevice(const WIFIDevice &) =delete; //delete copy constructor
     WIFIDevice(WIFIDevice &&o) = delete; //move constructor
     virtual ~WIFIDevice() override;

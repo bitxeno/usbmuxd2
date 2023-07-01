@@ -289,7 +289,7 @@ void Client::processData(const usbmuxd_header *hdr){
                     const char *pairRecord = NULL;
                     uint64_t pairRecord_len = 0;
                     retassure(pairRecord = plist_get_data_ptr(p_pairRecord, &pairRecord_len), "Failed to get data ptr for PairRecordData");
-                    plist_from_memory(pairRecord, (uint32_t)pairRecord_len, &p_parsedPairRecord);
+                    plist_from_memory(pairRecord, (uint32_t)pairRecord_len, &p_parsedPairRecord, NULL);
                 }
                 retassure(p_parsedPairRecord, "Failed to plist-parse received PairRecordData");
 
@@ -297,14 +297,22 @@ void Client::processData(const usbmuxd_header *hdr){
                 sysconf_set_device_record(record_id.c_str(), p_parsedPairRecord);
 
                 {
+                    plist_t p_macaddr = NULL;
+                    const char *macaddr;
+                    uint64_t macaddr_len = 0;
+                    if ((p_macaddr = plist_dict_get_item(p_parsedPairRecord, "WiFiMACAddress")) && (plist_get_node_type(p_macaddr) == PLIST_STRING)) {
+                        retassure(macaddr = plist_get_string_ptr(p_macaddr, &macaddr_len), "Failed to read macaddr from pairing record");
+                        (*_mux)->notify_device_wifi_paired(record_id, std::string(macaddr,macaddr_len));
+                    }
+
+
                     plist_t p_intval = NULL;
                     uint64_t intval = 0;
 
-                    assure(p_intval = plist_dict_get_item(p_recieved, "DeviceID"));
-                    assure(plist_get_node_type(p_intval) == PLIST_UINT);
-
-                    plist_get_uint_val(p_intval, &intval);
-                    (*_mux)->notify_device_paired((int)intval);
+                    if ((p_intval = plist_dict_get_item(p_recieved, "DeviceID")) && (plist_get_node_type(p_intval) == PLIST_UINT)) {
+                        plist_get_uint_val(p_intval, &intval);
+                        (*_mux)->notify_device_paired((int)intval);
+                    }
                 }
 
                 send_result(hdr->tag, RESULT_OK);

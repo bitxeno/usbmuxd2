@@ -15,8 +15,8 @@
 #include <plist/plist.h>
 #include "../sysconf/sysconf.hpp"
 
-WIFIDevice::WIFIDevice(std::string uuid, std::string ipaddr, std::string serviceName, std::shared_ptr<gref_Muxer> mux) 
-: Device(mux,Device::MUXCONN_WIFI), _ipaddr(ipaddr), _serviceName(serviceName), _hbclient(NULL), _hbrsp(NULL),
+WIFIDevice::WIFIDevice(std::string uuid, std::string ipaddr, std::string serviceName, bool paired, std::shared_ptr<gref_Muxer> mux) 
+: Device(mux,Device::MUXCONN_WIFI), _ipaddr(ipaddr), _serviceName(serviceName), _paired(paired), _hbclient(NULL), _hbrsp(NULL),
 	_idev(NULL)
 {
 	strncpy(_serial, uuid.c_str(), sizeof(_serial));

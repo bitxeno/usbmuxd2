@@ -47,14 +47,21 @@ void resolve_reply(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfac
     std::string serviceName{fullname};
     std::string macAddr{serviceName.substr(0,serviceName.find("@"))};
     std::string uuid;
+    bool paired = false;
 
     try{
-        uuid = sysconf_udid_for_macaddr(macAddr);
+        if (fullname.find("_apple-pairable._tcp") != std::string::npos) {
+            // AppleTV wireless pairable uuid
+            uuid = "fff" + macAddr + "fff";
+        } else {
+            uuid = sysconf_udid_for_macaddr(macAddr);
+            paired = true;
+        }
     }catch (tihmstar::exception &e){
         creterror("failed to find uuid for mac=%s with error=%d (%s)",macAddr.c_str(),e.code(),e.what());
     }
 
-    if (!(*(*devmgr)->_mux)->have_wifi_device(macAddr)) {
+    if (!(*(*devmgr)->_mux)->have_wifi_device(macAddr, paired)) {
         // found new device
 
         if (inet_addr(ipaddr.c_str()) == 0xffffffff) {
@@ -70,7 +77,7 @@ void resolve_reply(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfac
         }
 
         try{
-            dev = std::make_shared<WIFIDevice>(uuid, ipaddr.c_str(), serviceName, (*devmgr)->_mux);
+            dev = std::make_shared<WIFIDevice>(uuid, ipaddr.c_str(), serviceName, paired, (*devmgr)->_mux);
             (*devmgr)->device_add(dev); dev = NULL;
         } catch (tihmstar::exception &e){
             creterror("failed to construct device with error=%d (%s)",e.code(),e.what());
@@ -125,6 +132,7 @@ WIFIDeviceManager::WIFIDeviceManager(std::shared_ptr<gref_Muxer> mux)
     debug("WIFIDeviceManager mDNS-client");
     assure(_wifi_cb_refarg = new std::shared_ptr<gref_WIFIDeviceManager>(_ref));
     assure(!(err = DNSServiceBrowse(&_client, 0, kDNSServiceInterfaceIndexAny, "_apple-mobdev2._tcp", "", browse_reply, _wifi_cb_refarg)));
+    assure(!(err = DNSServiceBrowse(&_client, 0, kDNSServiceInterfaceIndexAny, "_apple-pairable._tcp", "", browse_reply, _wifi_cb_refarg)));
 
     assure((_dns_sd_fd = DNSServiceRefSockFD(_client))>0);
 

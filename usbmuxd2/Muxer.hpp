@@ -69,7 +69,7 @@ public:
     void delete_device(std::shared_ptr<Device> dev) noexcept;
     void delete_device_async(uint8_t bus, uint8_t address) noexcept;
     bool have_usb_device(uint8_t bus, uint8_t address) noexcept;
-    bool have_wifi_device(std::string macaddr) noexcept;
+    bool have_wifi_device(std::string macaddr, bool paired) noexcept;
     int id_for_device(const char *uuid, Device::mux_conn_type type) noexcept;
     size_t devices_cnt() noexcept;
 
@@ -82,6 +82,7 @@ public:
     void notify_device_add(std::shared_ptr<Device> dev) noexcept;
     void notify_device_remove(int deviceID) noexcept;
     void notify_device_paired(int deviceID) noexcept;
+    void notify_device_wifi_paired(std::string uuid, std::string macaddr) noexcept;
     void notify_alldevices(std::shared_ptr<Client> cli) noexcept;
 
     //---- Static ----

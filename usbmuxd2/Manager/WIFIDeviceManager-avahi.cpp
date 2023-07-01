@@ -10,6 +10,7 @@
 #include <libgeneral/macros.h>
 
 #ifdef HAVE_WIFI_AVAHI
+#include <string.h>
 #include <sysconf/sysconf.hpp>
 #include <avahi-common/error.h>
 #include <avahi-common/malloc.h>
@@ -42,6 +43,7 @@ WIFIDeviceManager::WIFIDeviceManager(std::shared_ptr<gref_Muxer> mux)
     assure(!err);
 
 	assure(_avahi_sb = avahi_service_browser_new(_avahi_client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_apple-mobdev2._tcp", NULL, (AvahiLookupFlags)0, avahi_browse_callback, _wifi_cb_refarg));
+    assure(_avahi_pairable_sb = avahi_service_browser_new(_avahi_client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_apple-pairable._tcp", NULL, (AvahiLookupFlags)0, avahi_browse_callback, _wifi_cb_refarg));
     debug("WIFIDeviceManager created avahi service_browser");
 }
 
@@ -51,6 +53,7 @@ WIFIDeviceManager::~WIFIDeviceManager(){
     //make sure _simple_poll is valid, while the event loop tries to use it
 
     safeFreeCustom(_avahi_sb,avahi_service_browser_free);
+    safeFreeCustom(_avahi_pairable_sb,avahi_service_browser_free);
     safeFreeCustom(_avahi_client,avahi_client_free);
     safeFreeCustom(_simple_poll,avahi_simple_poll_free);
     safeDelete(_wifi_cb_refarg);
@@ -137,20 +140,27 @@ void avahi_resolve_callback(AvahiServiceResolver *r, AvahiIfIndex interface, Ava
             std::string serviceName{name};
             std::string macAddr{serviceName.substr(0,serviceName.find("@"))};
             std::string uuid;
+            bool paired = false;
 
             try{
-                uuid = sysconf_udid_for_macaddr(macAddr);
+                if (strcmp(type, "_apple-pairable._tcp") == 0) {
+                    // AppleTV wireless pairable uuid
+                    uuid = "fff" + macAddr + "fff";
+                } else {
+                    uuid = sysconf_udid_for_macaddr(macAddr);
+                    paired = true;
+                }
             }catch (tihmstar::exception &e){
                 debug("failed to find uuid for mac=%s with error=%d (%s)",macAddr.c_str(),e.code(),e.what());
                 break;
             }
 
-            if (!(*(*devmgr)->_mux)->have_wifi_device(macAddr)) {
+            if (!(*(*devmgr)->_mux)->have_wifi_device(macAddr, paired)) {
                 // found new device
                 serviceName += ".";
                 serviceName += type;
                 try{
-                    dev = std::make_shared<WIFIDevice>(uuid,addr,serviceName, (*devmgr)->_mux);
+                    dev = std::make_shared<WIFIDevice>(uuid,addr,serviceName,paired,(*devmgr)->_mux);
                     (*devmgr)->device_add(dev); dev = NULL;
                 } catch (tihmstar::exception &e){
                 	creterror("failed to construct device with error=%d (%s)",e.code(),e.what());

@@ -224,7 +224,9 @@ void Muxer::add_device(std::shared_ptr<Device> dev) noexcept{
     if (dev->_conntype == Device::MUXCONN_WIFI){
         std::shared_ptr<WIFIDevice> wifidev = std::static_pointer_cast<WIFIDevice>(dev);
         try{
-            wifidev->startLoop();
+            if (wifidev->_paired) {
+                wifidev->startLoop();
+            }
         }catch (tihmstar::exception &e){
             error("Failed to start WIFIDevice %s with error=%d (%s)",wifidev->_serial,e.code(),e.what());
             _devices.delMember();
@@ -303,12 +305,12 @@ bool Muxer::have_usb_device(uint8_t bus, uint8_t address) noexcept{
     return false;
 }
 
-bool Muxer::have_wifi_device(std::string macaddr) noexcept{
+bool Muxer::have_wifi_device(std::string macaddr, bool paired) noexcept{
     _devices.addMember();
     for (auto dev : _devices._elems){
         if (dev->_conntype == Device::MUXCONN_WIFI) {
             std::shared_ptr<WIFIDevice> wifidev = std::static_pointer_cast<WIFIDevice>(dev);
-            if (wifidev->_serviceName.substr(0,wifidev->_serviceName.find("@")) == macaddr) {
+            if (wifidev->_serviceName.substr(0,wifidev->_serviceName.find("@")) == macaddr && wifidev->_paired == paired) {
                 _devices.delMember();
                 return true;
             }
@@ -466,6 +468,30 @@ void Muxer::notify_device_paired(int deviceID) noexcept{
         }
     }
     _clients.delMember();
+}
+
+void Muxer::notify_device_wifi_paired(std::string uuid, std::string macaddr) noexcept{
+    // check if the device is already paired
+    if (have_wifi_device(macaddr, true)) {
+        return;
+    }
+
+    // add AppleTV wifi paired device
+    _devices.addMember();
+    for (auto dev : _devices._elems){
+        if (dev->_conntype == Device::MUXCONN_WIFI) {
+            std::shared_ptr<WIFIDevice> wifidev = std::static_pointer_cast<WIFIDevice>(dev);
+            if (wifidev->_serviceName.substr(0,wifidev->_serviceName.find("@")) == macaddr) {
+                std::shared_ptr<WIFIDevice> devPaired = std::make_shared<WIFIDevice>(uuid,wifidev->_ipaddr,wifidev->_serviceName, true, _ref);
+                devPaired->_selfref = devPaired;
+                _devices.delMember();
+
+                add_device(devPaired);
+                return;
+            }
+        }
+    }
+    _devices.delMember();
 }
 
 

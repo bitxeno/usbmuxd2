@@ -32,6 +32,7 @@ private:
 	AvahiSimplePoll *_simple_poll;
 	AvahiClient *_avahi_client;
 	AvahiServiceBrowser *_avahi_sb;
+    AvahiServiceBrowser *_avahi_pairable_sb;
 
     virtual void loopEvent() override;
 public:

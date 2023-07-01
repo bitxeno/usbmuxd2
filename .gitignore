@@ -36,7 +36,6 @@ config.log
 config.status
 config.sub
 usbmuxd2/Makefile
-Makefile
 
 build-usbmuxd2-*
 usbmuxd2/usbmuxd
@@ -45,3 +44,4 @@ udev/39-usbmuxd.rules
 config.h.in~
 Build/
 configure~
+**/.DS_Store

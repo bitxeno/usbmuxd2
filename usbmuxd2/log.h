@@ -25,7 +25,7 @@ extern "C"{
 #ifdef DEBUG
 #   define debug(a ...) usbmuxd_log(LL_DEBUG,a)
 #else
-#   define debug(a ...)
+#   define debug(a ...) usbmuxd_log(LL_INFO,a)
 #endif
     
     enum loglevel {
