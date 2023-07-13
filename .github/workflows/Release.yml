@@ -121,8 +121,7 @@ jobs:
           arch: ${{ matrix.target.arch }}
       - name: Install build requirements
         run: |
-          sudo apt-get remove -y pkg-config udev libpcre2-8-0 ant mono-runtime-common nginx
-          sudo apt-mark showhold 
+          sudo apt-mark unhold pkg-config udev libpcre2-8-0
           sudo apt-get install -y pkg-config:arm64 libssl-dev:arm64 libudev-dev:arm64 udev:arm64 libavahi-client-dev:arm64 checkinstall
       - name: Build dependencies
         run: |
@@ -164,7 +163,6 @@ jobs:
           sudo checkinstall -y --pkgname=libusbmuxd --pkgversion=2.3.0 --pkgarch=arm64
           cd ..
 
-          sudo apt-mark showhold 
           git clone https://github.com/bitxeno/libimobiledevice.git
           cd libimobiledevice
           CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++ ./autogen.sh --prefix=/usr 	--disable-static --without-cython --host=aarch64-linux
