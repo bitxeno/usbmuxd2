@@ -112,13 +112,16 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      # - name: Remove conflicts amd64 package
+      #   run: |
+      #     sudo apt-get remove -y pkg-config udev
       - name: Install Cross-Compile Support
         uses: bitxeno/gha-ubuntu-cross@master
         with:
           arch: ${{ matrix.target.arch }}
       - name: Install build requirements
         run: |
-          sudo apt-get update
+          sudo apt-get remove -y pkg-config udev
           sudo apt-get install aptitude
           sudo aptitude install -y pkg-config:arm64 libssl-dev:arm64 libudev-dev:arm64 udev:arm64 libavahi-client-dev:arm64 checkinstall
       - name: Build dependencies
