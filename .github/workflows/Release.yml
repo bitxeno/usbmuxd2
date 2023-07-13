@@ -118,7 +118,7 @@ jobs:
           arch: ${{ matrix.target.arch }}
       - name: Install build requirements
         run: |
-          sudo apt-get install -y libssl-dev:arm64 libudev-dev:arm64 udev:arm64 libavahi-client-dev:arm64 pkg-config-aarch64-linux-gnu checkinstall
+          sudo apt-get install -y libselinux1:arm64 libssl-dev:arm64 libudev-dev:arm64 udev:arm64 libavahi-client-dev:arm64 pkg-config-aarch64-linux-gnu checkinstall
       - name: Build dependencies
         run: |
           mkdir build
