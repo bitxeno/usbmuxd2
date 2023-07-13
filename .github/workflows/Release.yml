@@ -112,41 +112,15 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Change Apt Azure repositories
-        run: sudo sed -i 's|deb http://azure.archive.ubuntu.com/ubuntu/|deb [arch=amd64] http://archive.ubuntu.com/ubuntu/|' /etc/apt/sources.list
-      - name: Change Apt Security repositories
-        run: sudo sed -i 's|deb http://security.ubuntu.com/ubuntu|deb [arch=amd64] http://security.ubuntu.com/ubuntu|' /etc/apt/sources.list
-      - name: Add ARM repos
-        run: |
-          sudo tee -a /etc/apt/sources.list.d/arm.list1 <<EOF
-          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports focal main restricted
-          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports focal-updates main restricted
-          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports focal universe
-          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports focal-updates universe
-          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports focal multiverse
-          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports focal-updates multiverse
-          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports focal-backports main restricted universe multiverse
-          EOF
-      - name: Add dpkg arch
-        run: sudo dpkg --add-architecture arm64
       - name: Install Cross-Compile Support
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-              libstdc++6-arm64-cross \
-              libc6-dev-arm64-cross \
-              libc6-dev:arm64 \
-              linux-libc-dev-arm64-cross \
-              linux-libc-dev:arm64
-          sudo apt-get install -y crossbuild-essential-arm64;
-          sudo apt-get install -y \
-            gcc-10-aarch64-linux \
-            g++-10-aarch64-linux \
-            libstdc++-10-dev-arm64-cross \
-            libstdc++-10-dev:arm64;
+        uses: bitxeno/gha-ubuntu-cross@master
+        with:
+          arch: ${{ matrix.target.arch }}
       - name: Install build requirements
         run: |
-          sudo apt-get install -y pkg-config:arm64 libssl-dev:arm64 libudev-dev:arm64 udev:arm64 libavahi-client-dev:arm64 checkinstall
+          sudo apt-get update
+          sudo apt-get install aptitude
+          sudo aptitude install -y pkg-config:arm64 libssl-dev:arm64 libudev-dev:arm64 udev:arm64 libavahi-client-dev:arm64 checkinstall
       - name: Build dependencies
         run: |
           mkdir build
