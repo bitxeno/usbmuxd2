@@ -103,7 +103,6 @@ jobs:
 
   linux-aarch64:
     runs-on: ubuntu-latest
-    container: catthehacker/ubuntu:act-20.04
     strategy:
       matrix:
         target:
@@ -113,16 +112,13 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      # - name: Remove conflicts amd64 package
-      #   run: |
-      #     sudo apt-get remove -y pkg-config udev
       - name: Install Cross-Compile Support
         uses: bitxeno/gha-ubuntu-cross@master
         with:
           arch: ${{ matrix.target.arch }}
       - name: Install build requirements
         run: |
-          sudo apt-get install -y pkg-config:arm64 libssl-dev:arm64 libudev-dev:arm64 udev:arm64 libavahi-client-dev:arm64 checkinstall
+          sudo apt-get install -y pkg-config libssl-dev:arm64 libudev-dev:arm64 udev:arm64 libavahi-client-dev:arm64 checkinstall
       - name: Build dependencies
         run: |
           mkdir build
