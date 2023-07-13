@@ -119,7 +119,7 @@ jobs:
       - name: Install build requirements
         run: |
           sudo apt-get update
-          sudo apt-get install -y pkg-config:arm64 libssl-dev:arm64 libudev-dev:arm64 libavahi-client-dev:arm64 checkinstall
+          sudo apt-get install -y pkg-config-aarch64-linux-gnu libssl-dev:arm64 libudev-dev:arm64 libavahi-client-dev:arm64 checkinstall
       - name: Build dependencies
         run: |
           mkdir build
