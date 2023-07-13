@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # linux:
+  # linux-x86_64:
   #   runs-on: ubuntu-20.04
   #   strategy:
   #     fail-fast: false
@@ -101,7 +101,7 @@ jobs:
   #         prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
   #         generate_release_notes: true
 
-  arm64:
+  linux-aarch64:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -112,67 +112,40 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Install Cross-Compile Support
-        shell: bash
-        env:
-          ARCH: ${{ matrix.target.arch }}
+      - name: Change Apt Azure repositories
+        run: sudo sed -i 's|deb http://azure.archive.ubuntu.com/ubuntu/|deb [arch=amd64] http://archive.ubuntu.com/ubuntu/|' /etc/apt/sources.list
+      - name: Change Apt Security repositories
+        run: sudo sed -i 's|deb http://security.ubuntu.com/ubuntu|deb [arch=amd64] http://security.ubuntu.com/ubuntu|' /etc/apt/sources.list
+      - name: Add ARM repos
         run: |
-          export CODENAME=$(lsb_release -c -s)
-          export APTFILE=/etc/apt/sources.list.d/$ARCH-cross-compile-sources.list
-          sudo dpkg --add-architecture $ARCH
-          if [ $ARCH != amd64 ] && [ $ARCH != i386 ]; then \
-            sudo bash -c "echo -e '\
-              deb [arch=$ARCH] http://ports.ubuntu.com/ $CODENAME main restricted \n\
-              deb [arch=$ARCH] http://ports.ubuntu.com/ $CODENAME-updates main restricted \n\
-              deb [arch=$ARCH] http://ports.ubuntu.com/ $CODENAME universe \n\
-              deb [arch=$ARCH] http://ports.ubuntu.com/ $CODENAME-updates universe \n\
-              deb [arch=$ARCH] http://ports.ubuntu.com/ $CODENAME multiverse \n\
-              deb [arch=$ARCH] http://ports.ubuntu.com/ $CODENAME-updates multiverse \n\
-              deb [arch=$ARCH] http://ports.ubuntu.com/ $CODENAME-backports main restricted universe multiverse \n' > $APTFILE"; fi
-          if [ $ARCH == i386 ]; then \
-            sudo sed -i 's/deb http/deb [arch=amd64,i386] http/g' /etc/apt/sources.list; \
-          else \
-            sudo sed -i 's/deb http/deb [arch=amd64] http/g' /etc/apt/sources.list; \
-          fi
+          sudo tee -a /etc/apt/sources.list.d/arm.list1 <<EOF
+          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports focal main restricted
+          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports focal-updates main restricted
+          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports focal universe
+          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports focal-updates universe
+          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports focal multiverse
+          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports focal-updates multiverse
+          deb [arch=arm64,armhf] http://ports.ubuntu.com/ubuntu-ports focal-backports main restricted universe multiverse
+          EOF
+      - name: Add dpkg arch
+        run: sudo dpkg --add-architecture arm64
+      - name: Install Cross-Compile Support
+        run: |
           sudo apt-get update
           sudo apt-get install -y \
-              libstdc++6-$ARCH-cross \
-              libc6-dev-$ARCH-cross \
-              libc6-dev:$ARCH \
-              linux-libc-dev-$ARCH-cross \
-              linux-libc-dev:$ARCH
-          if [ $ARCH != amd64 ] && [ $ARCH != i386 ]; then \
-            sudo apt-get install -y crossbuild-essential-$ARCH; \
-          fi        
-          if [ $ARCH == amd64 ]; then export ARCHGCC=x86-64-linux-gnu; fi
-          if [ $ARCH == i386 ]; then export ARCHGCC=i686-linux-gnu; fi
-          if [ $ARCH == arm64 ]; then export ARCHGCC=aarch64-linux-gnu; fi
-          if [ $ARCH == armhf ]; then export ARCHGCC=arm-linux-gnueabihf; fi
-          if [ $ARCH == armel ]; then export ARCHGCC=arm-linux-gnueabi; fi 
-          if [ $CODENAME == bionic ]; then \
-            sudo apt-get install -y \
-              gcc-8-$ARCHGCC \
-              g++-8-$ARCHGCC \
-              libstdc++-8-dev-$ARCH-cross \
-              libstdc++-8-dev:$ARCH; \
-          fi       
-          if [ $CODENAME == focal ]; then \
-            sudo apt-get install -y \
-              gcc-10-$ARCHGCC \
-              g++-10-$ARCHGCC \
-              libstdc++-10-dev-$ARCH-cross \
-              libstdc++-10-dev:$ARCH; \
-          fi
-          if [ $CODENAME == jammy ]; then \
-            sudo apt-get install -y \
-              gcc-11-$ARCHGCC \
-              g++-11-$ARCHGCC \
-              libstdc++-11-dev-$ARCH-cross \
-              libstdc++-11-dev:$ARCH; \
-          fi
+              libstdc++6-arm64-cross \
+              libc6-dev-arm64-cross \
+              libc6-dev:arm64 \
+              linux-libc-dev-arm64-cross \
+              linux-libc-dev:arm64
+          sudo apt-get install -y crossbuild-essential-arm64;
+          sudo apt-get install -y \
+            gcc-10-aarch64-linux \
+            g++-10-aarch64-linux \
+            libstdc++-10-dev-arm64-cross \
+            libstdc++-10-dev:arm64;
       - name: Install build requirements
         run: |
-          sudo apt-get update
           sudo apt-get install -y pkg-config:arm64 libssl-dev:arm64 libudev-dev:arm64 udev:arm64 libavahi-client-dev:arm64 checkinstall
       - name: Build dependencies
         run: |
