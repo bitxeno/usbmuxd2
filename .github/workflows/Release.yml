@@ -85,7 +85,7 @@ jobs:
           mv build/libusbmuxd/libusbmuxd*.deb artifact/
           mv build/libimobiledevice/libimobiledevice*.deb artifact/
           mv usbmuxd*.deb artifact/
-          rename "s/amd64/${{ matrix.target.arch }}/" ./artifact/*
+          rename "s/x86_64/amd64/" ./artifact/*
           tar -czvf usbmuxd2-ubuntu-${{ matrix.target.arch }}.tar.gz -C artifact .
       - name: Archive package
         uses: actions/upload-artifact@v3
@@ -187,7 +187,7 @@ jobs:
           mv build/libusbmuxd/libusbmuxd*.deb artifact/
           mv build/libimobiledevice/libimobiledevice*.deb artifact/
           mv usbmuxd*.deb artifact/
-          rename "s/arm64/${{ matrix.target.arch }}/" ./artifact/*
+          rename "s/aarch64/arm64/" ./artifact/*
           tar -czvf usbmuxd2-ubuntu-${{ matrix.target.arch }}.tar.gz -C artifact .
       - name: Archive package
         uses: actions/upload-artifact@v3
