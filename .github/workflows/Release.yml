@@ -12,8 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - arch: "x86_64"
-            pkgarch: "amd64"
+          - arch: "amd64"
     steps:
       - uses: actions/checkout@v3
         with:
@@ -85,7 +84,7 @@ jobs:
           mv build/libusbmuxd/libusbmuxd*.deb artifact/
           mv build/libimobiledevice/libimobiledevice*.deb artifact/
           mv usbmuxd*.deb artifact/
-          rename "s/x86_64/amd64/" ./artifact/*
+          rename "s/x86_64/${{ matrix.target.arch }}/" ./artifact/*
           tar -czvf usbmuxd2-ubuntu-${{ matrix.target.arch }}.tar.gz -C artifact .
       - name: Archive package
         uses: actions/upload-artifact@v3
@@ -109,8 +108,7 @@ jobs:
     strategy:
       matrix:
         target:
-          - arch: "aarch64"
-            pkgarch: "arm64"
+          - arch: "arm64"
     steps:
       - uses: actions/checkout@v3
         with:
@@ -187,7 +185,7 @@ jobs:
           mv build/libusbmuxd/libusbmuxd*.deb artifact/
           mv build/libimobiledevice/libimobiledevice*.deb artifact/
           mv usbmuxd*.deb artifact/
-          rename "s/aarch64/arm64/" ./artifact/*
+          rename "s/aarch64/${{ matrix.target.arch }}/" ./artifact/*
           tar -czvf usbmuxd2-ubuntu-${{ matrix.target.arch }}.tar.gz -C artifact .
       - name: Archive package
         uses: actions/upload-artifact@v3
