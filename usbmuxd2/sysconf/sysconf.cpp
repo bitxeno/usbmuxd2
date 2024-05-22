@@ -2,7 +2,7 @@
 //  sysconf.cpp
 //  usbmuxd2
 //
-//  Created by tihmstar on 18.12.20.
+//  Created by tihmstar on 08.11.23.
 //
 
 #include "sysconf.hpp"
@@ -32,7 +32,17 @@
 static std::map<std::string,std::string> gKnownMacAddrs;
 static std::mutex gKnownMacAddrsLck;
 
-constexpr const char *sysconf_get_config_dir(){
+const char *sysconf_get_config_dir(){
+    static bool didCheckConfigEnv = false;
+    static const char *overwriteConfigDir = NULL;
+    
+    if (!didCheckConfigEnv){
+        overwriteConfigDir = getenv("USBMUXD_SYSCONF_DIR");
+        didCheckConfigEnv = true;
+    }
+    
+    if (overwriteConfigDir) return overwriteConfigDir;
+    
     return BASE_CONFIG_DIR "/" CONFIG_DIR;
 }
 
@@ -54,8 +64,8 @@ static plist_t readPlist(const char *filePath){
     
     {
         plist_t pl = NULL;
-        plist_from_memory(fbuf, (uint32_t)finfo.st_size, &pl);
-        retassure(pl, "failed to parse plist at path '%s'",filePath);        
+        plist_from_memory(fbuf, (uint32_t)finfo.st_size, &pl, NULL);
+        retassure(pl, "failed to parse plist at path '%s'",filePath);
         return pl;
     }
 }
@@ -78,12 +88,11 @@ static void mkdir_with_parents(const char *dir, int mode){
     assure(parent = strdup(dir));
     assure(parentdir = dirname(parent));
     mkdir_with_parents(parentdir, mode);
-#warning TODO is this even correct??
 }
 
 static void sysconf_create_config_dir(void){
     struct stat st{};
-    constexpr const char *config_path = sysconf_get_config_dir();
+    const char *config_path = sysconf_get_config_dir();
     
     if (stat(config_path, &st) != 0) {
         mkdir_with_parents(config_path, 0755);
@@ -110,7 +119,7 @@ static char *sysconf_generate_system_buid(){
 }
 
 std::string get_device_record_path(const char *udid){
-    constexpr const char *config_path = sysconf_get_config_dir();
+    const char *config_path = sysconf_get_config_dir();
     sysconf_create_config_dir();
     
     std::string ret = config_path;
@@ -123,7 +132,7 @@ std::string get_device_record_path(const char *udid){
 
 static void sysconf_load_known_macaddrs(){
     std::unique_lock<std::mutex> ul(gKnownMacAddrsLck);
-    constexpr const char *config_path = sysconf_get_config_dir();
+    const char *config_path = sysconf_get_config_dir();
 
     sysconf_create_config_dir();
 
@@ -296,7 +305,7 @@ std::string sysconf_udid_for_macaddr(std::string macaddr){
 }
 
 void sysconf_fix_permissions(int uid, int gid){
-    constexpr const char *config_path = sysconf_get_config_dir();
+    const char *config_path = sysconf_get_config_dir();
 
     sysconf_create_config_dir();
 
@@ -315,8 +324,8 @@ void sysconf_fix_permissions(int uid, int gid){
                 continue;
             std::string path = config_path;
             path+= "/";
-            path+= ent->d_name;    
-            assure(!chown(path.c_str(), uid, gid));     
+            path+= ent->d_name;
+            assure(!chown(path.c_str(), uid, gid));
         }
     }
 }
@@ -339,9 +348,10 @@ bool sysconf_try_getconfig_bool(std::string key, bool defaultValue){
     }
 }
 
-Config::Config() : 
+Config::Config() :
 //config
 doPreflight(false),
+allowHeartlessWifi(false),
 enableWifiDeviceManager(false),
 enableUSBDeviceManager(false),
 //commandline
@@ -358,5 +368,5 @@ void Config::load(){
     doPreflight = sysconf_try_getconfig_bool("doPreflight",true);
     enableWifiDeviceManager = sysconf_try_getconfig_bool("enableWifiDeviceManager",true);
     enableUSBDeviceManager = sysconf_try_getconfig_bool("enableUSBDeviceManager",true);
-    info("Loaded config");    
+    info("Loaded config");
 }

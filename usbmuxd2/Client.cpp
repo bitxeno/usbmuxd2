@@ -2,7 +2,7 @@
 //  Client.cpp
 //  usbmuxd2
 //
-//  Created by tihmstar on 11.12.20.
+//  Created by tihmstar on 20.07.23.
 //
 
 #include "Client.hpp"
@@ -10,15 +10,17 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include "Muxer.hpp"
 #include <unistd.h>
-#include "./sysconf/sysconf.hpp"
+#include "Muxer.hpp"
+#include "MUXException.hpp"
+#include "sysconf/sysconf.hpp"
 
 #pragma mark Client
-
-Client::Client(std::shared_ptr<gref_Muxer> mux, int fd, uint64_t number)
-: _selfref{}, _mux(mux), _fd(fd), _number(number), _recvbuffer(NULL), _recvBytesCnt(0), _proto_version(0),
-    _isListening(false), _info{}
+Client::Client(Muxer *mux, ClientManager *parent, int fd, uint64_t number)
+: _selfref{}, _mux(mux), _parent(parent)
+, _fd(fd), _number(number), _recvbuffer(NULL), _recvBytesCnt(0)
+, _proto_version(0),
+_isListening(false), _info{}
 {
     debug("[Client] initializing Client %d",_fd);
     const int bufsize = Client::bufsize;
@@ -35,38 +37,41 @@ Client::Client(std::shared_ptr<gref_Muxer> mux, int fd, uint64_t number)
     }
 
     setsockopt(_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&yes, sizeof(int));
-#ifdef __APPLE__
+#ifdef SO_NOSIGPIPE
     setsockopt(_fd, SOL_SOCKET, SO_NOSIGPIPE, (void*)&yes, sizeof(int));
 #endif
 }
 
 Client::~Client(){
     debug("[Client] destroying Client %d",_fd);
-    kill();
-
-
+    stopLoop();
+    {
+        std::unique_lock<std::mutex> ul(_parent->_childrenLck);
+        _parent->_children.erase(this);
+        _parent->_childrenEvent.notifyAll();
+        _parent = NULL;
+    }
+    
     safeClose(_fd);
     safeFree(_recvbuffer);
-//    safeFree(_info.bundleID);
-//    safeFree(_info.clientVersionString);
-//    safeFree(_info.progName);
-
 }
 
-void Client::kill() noexcept{
-    debug("[Client] killing Client %d",_fd);
-    (*_mux)->delete_client(_fd);
-    stopLoop();
-}
-
+#pragma mark inheritance function
 void Client::stopAction() noexcept{
     if (_fd > 0) shutdown(_fd, SHUT_RDWR);
 }
 
-void Client::loopEvent(){
+void Client::afterLoop() noexcept{
+    _mux->delete_client(_selfref.lock());
+}
+
+bool Client::loopEvent(){
     _recvBytesCnt = 0;
     try {
         recv_data();
+    } catch (tihmstar::MUXException_client_disconnected &e){
+        debug("Client disconnected, this is fine");
+        throw;
     } catch (tihmstar::exception &e) {
         error("failed to recv_data on client %d with error=%s code=%d",_fd,e.what(),e.code());
 #ifdef DEBUG
@@ -74,8 +79,9 @@ void Client::loopEvent(){
 #endif
         throw; //immediately terminate this thread
     }
+    return true;
 }
-
+#pragma mark private member function
 void Client::update_client_info(const plist_t dict){
     plist_t node = NULL;
     if ((node = plist_dict_get_item(dict, "ClientVersionString")) && (plist_get_node_type(node) == PLIST_STRING)) {
@@ -95,12 +101,13 @@ void Client::update_client_info(const plist_t dict){
     }
 }
 
-
 void Client::readData(){
     ssize_t got = 0;
-    got = recv(_fd, _recvbuffer+_recvBytesCnt, Client::bufsize-_recvBytesCnt, 0);
+    size_t readsize = Client::bufsize-_recvBytesCnt;
+    retassure(readsize, "out of bufspace for client");
+    got = recv(_fd, _recvbuffer+_recvBytesCnt, readsize, 0);
     if (got == 0) {
-        reterror("client %d disconnected!",_fd);
+        retcustomerror(MUXException_client_disconnected, "client %d disconnected!",_fd);
     }
     assure(got > 0);
     _recvBytesCnt+=got;
@@ -119,7 +126,6 @@ void Client::recv_data(){
         readData();
         retassure(_recvBytesCnt<Client::bufsize, "no more space to read");
     }
-
     processData(hdr);
 }
 
@@ -203,7 +209,7 @@ void Client::processData(const usbmuxd_header *hdr){
 
                 goto PLIST_CLIENT_CONNECTION_LOC;
             } else if (message == "ListDevices") {
-                (*_mux)->send_deviceList(_selfref.lock(), hdr->tag);
+                _mux->send_deviceList(_selfref.lock(), hdr->tag);
                 return;
             } else if (message == "ReadBUID") {
                 plist_t p_rsp = NULL;
@@ -289,14 +295,14 @@ void Client::processData(const usbmuxd_header *hdr){
                     const char *pairRecord = NULL;
                     uint64_t pairRecord_len = 0;
                     retassure(pairRecord = plist_get_data_ptr(p_pairRecord, &pairRecord_len), "Failed to get data ptr for PairRecordData");
-                    plist_from_memory(pairRecord, (uint32_t)pairRecord_len, &p_parsedPairRecord);
+                    plist_from_memory(pairRecord, (uint32_t)pairRecord_len, &p_parsedPairRecord, NULL);
                 }
                 retassure(p_parsedPairRecord, "Failed to plist-parse received PairRecordData");
 
 
                 sysconf_set_device_record(record_id.c_str(), p_parsedPairRecord);
 
-                {
+                try{
                     plist_t p_intval = NULL;
                     uint64_t intval = 0;
 
@@ -304,14 +310,15 @@ void Client::processData(const usbmuxd_header *hdr){
                     assure(plist_get_node_type(p_intval) == PLIST_UINT);
 
                     plist_get_uint_val(p_intval, &intval);
-                    (*_mux)->notify_device_paired((int)intval);
+                    _mux->notify_device_paired((int)intval);
+                }catch (tihmstar::exception &e){
+                    debug("Failed to notify about successfully pairing of '%s'",record_id.c_str());
                 }
 
                 send_result(hdr->tag, RESULT_OK);
                 return;
             } else if (message == "DeletePairRecord") {
                 std::string record_id;
-
                 // get pair record id
                 try {
                     const char *str = NULL;
@@ -331,7 +338,7 @@ void Client::processData(const usbmuxd_header *hdr){
                 send_result(hdr->tag, RESULT_OK);
                 return;
             }else if (message == "ListListeners") {
-                (*_mux)->send_listenerList(_selfref.lock(), hdr->tag);
+                _mux->send_listenerList(_selfref.lock(), hdr->tag);
                 return;
             }else{
                 error("Unexpected command '%s' received!", message.c_str());
@@ -363,8 +370,11 @@ PLIST_CLIENT_CONNECTION_LOC:
     try {
         //transfer socket ownership to device!
         _connectTag = hdr->tag;
-        (*_mux)->start_connect(device_id, portnum, _selfref.lock());
+        _mux->start_connect(device_id, portnum, _selfref.lock());
     } catch (tihmstar::exception &e) {
+#ifdef DEBUG
+        e.dump();
+#endif
         send_result(hdr->tag, RESULT_CONNREFUSED);
         return;
     }
@@ -374,7 +384,7 @@ PLIST_CLIENT_LISTEN_LOC:
     send_result(hdr->tag, RESULT_OK);
     debug("Client %d now LISTENING", _fd);
     _isListening = true;
-    (*_mux)->notify_alldevices(_selfref.lock()); //inform client about all connected devices
+    _mux->notify_alldevices(_selfref.lock()); //inform client about all connected devices
     return;
 }
 
@@ -422,4 +432,18 @@ void Client::send_result(uint32_t tag, uint32_t result){
         /* binary packet */
         send_pkt(tag, MESSAGE_RESULT, &result, sizeof(uint32_t));
     }
+}
+
+#pragma mark public member function
+void Client::kill() noexcept{
+    debug("[Client] killing Client %d",_fd);
+    std::shared_ptr<Client> selfref = _selfref.lock();
+    _parent->_reapClients.post(selfref);
+}
+
+void Client::deconstruct() noexcept{
+    debug("[Client] deconstructing Client %d",_fd);
+    std::shared_ptr<Client> selfref = _selfref.lock();
+    _mux->delete_client(selfref);
+    stopLoop();
 }

@@ -9,7 +9,6 @@
 #include "preflight.hpp"
 
 #include <libgeneral/macros.h>
-#include "../Device.hpp"
 #include "sysconf.hpp"
 #include <string.h>
 #include <stdio.h>
@@ -55,8 +54,9 @@ static void pairing_callback(const char* notification, void* userdata) noexcept{
 
     cretassure(!(lret = lockdownd_client_new(dev, &lockdown, "usbmuxd")),"%s: ERROR: Could not connect to lockdownd on device %s, lockdown error %d", __func__, dev->udid, lret);
     if (strcmp(notification, "com.apple.mobile.lockdown.request_pair") == 0) {
-        info("%s: user trusted this computer on device %s, pairing now", __func__, dev->udid);
+        debug("%s: user trusted this computer on device %s, pairing now", __func__, dev->udid);
         cretassure(!(lret = lockdownd_pair(lockdown, NULL)), "%s: ERROR: Pair failed for device %s, lockdown error %d", __func__, dev->udid, lret);
+        info("Device %s is now paired", dev->udid);
     } else if (strcmp(notification, "com.apple.mobile.lockdown.request_host_buid") == 0) {
         lockdownd_set_untrusted_host_buid(lockdown);
     }
@@ -64,7 +64,6 @@ error:
     if (lockdown)
         lockdownd_client_free(lockdown);
     if (cb_data) {
-
         std::thread delthread([](np_cb_data *cb_data){
             debug("deleing pairing_callback cb_data(%p)",cb_data);
             if (cb_data->np){ //this needs to be set!
@@ -77,12 +76,10 @@ error:
             safeFree(cb_data);
         },cb_data);
         delthread.detach();
-
     }
 }
 
 void preflight_device(const char *serial, int id){
-    std::string host_id;
     int version_major = 0;
     lockdownd_error_t lret = LOCKDOWN_E_SUCCESS;
     idevice_error_t iret = IDEVICE_E_SUCCESS;
@@ -146,26 +143,26 @@ void preflight_device(const char *serial, int id){
     }
 
     {
-        const char *str = NULL;
-        uint64_t strlen = 0;
+        char *hostid_str = NULL;
+        cleanup([&]{
+            safeFree(hostid_str);
+        });
         plist_t p_hostid = NULL;
 
         retassure(p_hostid = plist_dict_get_item(p_pairingRecord, "HostID"), "Failed to get HostID from pairing record");
+        retassure((plist_get_string_val(p_hostid, &hostid_str),hostid_str), "Failed to get str ptr from HostID");
 
-        retassure(str = plist_get_string_ptr(p_hostid, &strlen), "Failed to get str ptr from HostID");
-        host_id = std::string(str,strlen);
+        if (!(lret = lockdownd_start_session(lockdown, hostid_str, NULL, NULL))){
+            info("%s: Finished preflight on device %s", __func__, serial);
+            return;
+        }
     }
 
-    if (!(lret = lockdownd_start_session(lockdown, host_id.c_str(), NULL, NULL))){
-        info("%s: Finished preflight on device %s", __func__, serial);
-        return;
-    }
     error("%s: StartSession failed on device %s, lockdown error %d", __func__, serial, lret);
 
     if (lret == LOCKDOWN_E_SSL_ERROR) {
         error("%s: The stored pair record for device %s is invalid. Removing.", __func__, serial);
         sysconf_remove_device_record(serial);
-        host_id.erase();
     }
 
 pairing_required:
@@ -196,7 +193,17 @@ pairing_required:
     //otherwise something unexpected happened
 
     //this works starting with iOS 7, otherwise we're done pairing anyways
-    retassure(lret == LOCKDOWN_E_PAIRING_DIALOG_RESPONSE_PENDING,"%s: Device %s in unexpected pair state %d", __func__, serial,lret);
+    switch (lret) {
+        case LOCKDOWN_E_PAIRING_DIALOG_RESPONSE_PENDING:
+            break;
+        case LOCKDOWN_E_RECEIVE_TIMEOUT:
+            reterror("%s: Device %s in unexpected pair state LOCKDOWN_E_RECEIVE_TIMEOUT'", __func__, serial,lret);
+        case LOCKDOWN_E_USER_DENIED_PAIRING:
+            reterror("%s: Device %s in unexpected pair state LOCKDOWN_E_USER_DENIED_PAIRING'", __func__, serial,lret);
+            
+        default:
+            reterror("%s: Device %s in unexpected pair state %d", __func__, serial,lret);
+    }
 
     retassure((lret = lockdownd_start_service(lockdown, "com.apple.mobile.insecure_notification_proxy", &service)) == LOCKDOWN_E_SUCCESS, "%s: ERROR: Could not start insecure_notification_proxy on %s, lockdown error %d", __func__, serial, lret);
 

@@ -10,38 +10,40 @@
 #ifndef WIFIDeviceManager_avahi_hpp
 #define WIFIDeviceManager_avahi_hpp
 
+#include "../Muxer.hpp"
+#include "DeviceManager.hpp"
+#include "../Devices/WIFIDevice.hpp"
+
+#include <libgeneral/DeliveryEvent.hpp>
+
 #include <avahi-common/simple-watch.h>
 #include <avahi-client/client.h>
 #include <avahi-client/lookup.h>
 
-#include "../Muxer.hpp"
-#include "DeviceManager.hpp"
-#include "WIFIDeviceManager.hpp"
-#include "../Devices/WIFIDevice.hpp"
-
 class WIFIDeviceManager : public DeviceManager{
-private: //for lifecycle management only
-    tihmstar::Event _finalUnrefEvent;
-    std::shared_ptr<gref_WIFIDeviceManager> _ref;
-#ifdef DEBUG
-    std::weak_ptr<gref_WIFIDeviceManager> __debug_ref;
-#endif
 private:
-    std::shared_ptr<gref_WIFIDeviceManager> *_wifi_cb_refarg;
+    std::set<WIFIDevice *> _children;  //raw ptr to shared objec
+    std::mutex _childrenLck;
+    tihmstar::Event _childrenEvent;
+    std::thread _devReaperThread;
+    tihmstar::DeliveryEvent<std::shared_ptr<WIFIDevice>> _reapDevices;
 
-	AvahiSimplePoll *_simple_poll;
-	AvahiClient *_avahi_client;
-	AvahiServiceBrowser *_avahi_sb;
+    AvahiSimplePoll *_simple_poll;
+    AvahiClient *_avahi_client;
+    AvahiServiceBrowser *_avahi_sb;
+    AvahiServiceBrowser *_avahi_sb2;
 
-    virtual void loopEvent() override;
+    virtual bool loopEvent() override;
+    virtual void stopAction() noexcept override;
+
+    void reaper_runloop();
 public:
-    WIFIDeviceManager(std::shared_ptr<gref_Muxer> mux);
+    WIFIDeviceManager(Muxer *mux);
     virtual ~WIFIDeviceManager() override;
 
-    void device_add(std::shared_ptr<WIFIDevice> dev);
-    void kill() noexcept;
+    void device_add(std::shared_ptr<WIFIDevice> dev, bool notify = true);
 
-    friend gref_WIFIDeviceManager;
+    friend WIFIDevice;
     friend void avahi_client_callback(AvahiClient *c, AvahiClientState state, void* userdata) noexcept;
     friend void avahi_browse_callback(AvahiServiceBrowser *b, AvahiIfIndex interface, AvahiProtocol protocol, AvahiBrowserEvent event,
         const char *name, const char *type, const char *domain, AvahiLookupResultFlags flags, void* userdata) noexcept;
