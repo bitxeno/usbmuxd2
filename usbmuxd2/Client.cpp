@@ -107,7 +107,7 @@ void Client::readData(){
     retassure(readsize, "out of bufspace for client");
     got = recv(_fd, _recvbuffer+_recvBytesCnt, readsize, 0);
     if (got == 0) {
-        retcustomerror(MUXException_client_disconnected, "client %d disconnected!",_fd);
+        reterror("client %d disconnected!",_fd);
     }
     assure(got > 0);
     _recvBytesCnt+=got;
