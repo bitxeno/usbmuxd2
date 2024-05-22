@@ -35,7 +35,7 @@ jobs:
           sudo checkinstall -y --pkgname=libusb --pkgversion=1.0.26 --pkgarch=amd64
           cd ..
 
-          git clone https://github.com/tihmstar/libgeneral.git -b 64
+          git clone https://github.com/tihmstar/libgeneral.git -b 77
           cd libgeneral
           ./autogen.sh --prefix=/usr
           make
