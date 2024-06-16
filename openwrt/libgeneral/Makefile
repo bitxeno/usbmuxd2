@@ -34,7 +34,7 @@ endef
 
 define Build/Prepare
 	rm -rf $(PKG_BUILD_DIR)
-	git clone https://github.com/tihmstar/libgeneral.git  $(PKG_BUILD_DIR)
+	git clone https://github.com/tihmstar/libgeneral.git -b 64 $(PKG_BUILD_DIR)
 endef
 
 define Build/Configure
