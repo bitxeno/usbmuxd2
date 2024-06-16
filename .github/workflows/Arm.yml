@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  linux-aarch64:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        target:
+          - arch: "aarch64"
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install Cross-Compile Support
+        uses: bitxeno/gha-ubuntu-cross@master
+        with:
+          arch: arm64
+      - name: Install build requirements
+        run: |
+          sudo apt-get install -y pkg-config:arm64 libssl-dev:arm64 libudev-dev:arm64 \ 
+          udev:arm64 libavahi-client-dev:arm64 checkinstall rename
+      - name: Build dependencies
+        run: |
+          mkdir build
+          cd build
+
+          export CC=aarch64-linux-gnu-gcc
+          export CXX=aarch64-linux-gnu-g++
+
+          git clone https://github.com/libusb/libusb.git -b v1.0.26
+          cd libusb
+          ./autogen.sh --prefix=/usr --disable-static --host=aarch64-linux
+          make
+          sudo checkinstall -y --pkgname=libusb --pkgversion=1.0.26 --pkgarch=arm64
+          cd ..
+
+          git clone https://github.com/tihmstar/libgeneral.git -b 64
+          cd libgeneral
+          ./autogen.sh --prefix=/usr --host=aarch64-linux
+          make
+          sudo checkinstall -y --pkgname=libgeneral --pkgversion=1.0.0 --pkgarch=arm64
+          cd ..
+
+          git clone https://github.com/libimobiledevice/libplist.git -b 2.3.0
+          cd libplist
+          ./autogen.sh --prefix=/usr --disable-static --without-cython --host=aarch64-linux
+          make
+          sudo checkinstall -y --pkgname=libplist --pkgversion=2.3.0 --pkgarch=arm64
+          cd ..
+
+          git clone https://github.com/libimobiledevice/libimobiledevice-glue -b 1.0.0
+          cd libimobiledevice-glue
+          ./autogen.sh --prefix=/usr 	--disable-static --without-cython --host=aarch64-linux
+          make
+          sudo checkinstall -y --pkgname=libimobiledevice-glue --pkgversion=1.0.0 --pkgarch=arm64
+          cd ..
+
+          git clone https://github.com/bitxeno/libusbmuxd.git
+          cd libusbmuxd
+          ./autogen.sh --prefix=/usr 	--disable-static  --host=aarch64-linux
+          make
+          sudo checkinstall -y --pkgname=libusbmuxd --pkgversion=2.3.0 --pkgarch=arm64
+          cd ..
+
+          git clone https://github.com/bitxeno/libimobiledevice.git
+          cd libimobiledevice
+          ./autogen.sh --prefix=/usr 	--disable-static --without-cython --host=aarch64-linux
+          make
+          sudo checkinstall -y --pkgname=libimobiledevice --pkgversion=1.3.1 --pkgarch=arm64
+          cd ../../
+      - name: Build
+        run: |
+          ./autogen.sh --prefix=/usr --host=aarch64-linux
+          make
+          sudo checkinstall -y --pkgname=usbmuxd2 --pkgversion=1.0.0 --pkgarch=arm64
+      - name: Compress build files
+        run: |
+          mkdir artifact
+          mv build/libusb/libusb*.deb artifact/
+          mv build/libgeneral/libgeneral*.deb artifact/
+          mv build/libplist/libplist*.deb artifact/
+          mv build/libimobiledevice-glue/libimobiledevice-glue*.deb artifact/
+          mv build/libusbmuxd/libusbmuxd*.deb artifact/
+          mv build/libimobiledevice/libimobiledevice*.deb artifact/
+          mv usbmuxd*.deb artifact/
+          rename "s/arm64/${{ matrix.target.arch }}/" ./artifact/*
+          tar -czvf usbmuxd2-ubuntu-${{ matrix.target.arch }}.tar.gz -C artifact .
+      - name: Archive package
+        uses: actions/upload-artifact@v3
+        with:
+          name: usbmuxd2-ubuntu-${{ matrix.target.arch }}
+          path: |
+            artifact/*.deb
+          if-no-files-found: error
+      - name: Upload package to GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: "startsWith(github.ref, 'refs/tags/')"
+        with:
+          files: |
+            usbmuxd2-ubuntu-*.tar.gz
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
+          generate_release_notes: true
