@@ -24,9 +24,9 @@ jobs:
           sudo apt install -y pkg-config checkinstall rename libssl-dev:arm64 libudev-dev:arm64 libavahi-client-dev:arm64
           echo $PKG_CONFIG_PATH
           which pkg-config
-          pkg-config --cflags avahi-client
-          pkg-config --libs avahi-client
-          ls -al /usr/aarch64-linux-gnu/lib/pkgconfig
+      - run: pkg-config --libs avahi-client
+      - run: pkg-config --cflags avahi-client
+      - run: ls -al /usr/aarch64-linux-gnu/lib/pkgconfig
       - name: Build dependencies
         run: |
           mkdir build
@@ -34,6 +34,13 @@ jobs:
 
           export CC=aarch64-linux-gnu-gcc
           export CXX=aarch64-linux-gnu-g++
+
+          git clone https://github.com/avahi/avahi.git -b v0.8
+          cd avahi
+          ./autogen.sh --prefix=/usr --disable-static --host=aarch64-linux
+          make
+          sudo checkinstall -y --pkgname=libusb --pkgversion=0.8 --pkgarch=arm64
+          cd ..
 
           git clone https://github.com/libusb/libusb.git -b v1.0.26
           cd libusb
