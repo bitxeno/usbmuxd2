@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  openwrt:
+    name: OpenWrt Package - ${{ matrix.target.arch }}
+    runs-on: ubuntu-20.04
+    environment: OpenWrt
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - arch: "x86_64"
+            sdk: "https://downloads.openwrt.org/releases/22.03.2/targets/x86/64/openwrt-sdk-22.03.2-x86-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz"
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          path: "src"
+      - name: Install build requirements
+        run: |
+          set -e
+          sudo apt-get update
+          sudo apt-get install -y build-essential ccache ecj fastjar file g++ gawk \
+          gettext java-propose-classpath libelf-dev libncurses5-dev \
+          libncursesw5-dev libssl-dev python3 unzip rsync \
+          python3-distutils python3-setuptools python3-dev \
+          swig time xsltproc zlib1g-dev systemd wget curl \
+          git psmisc automake autoconf libtool
+      - name: Install OpenWrt SDK
+        run: |
+          set -e
+          wget -O openwrt-sdk.tar.xz ${{ matrix.target.sdk }}
+          xz -q -d openwrt-sdk.tar.xz
+          tar -xvf openwrt-sdk.tar && mv -f openwrt-sdk-* openwrt-sdk
+      - name: Build Package
+        run: |
+          set -e
+          mv src/openwrt/libgeneral openwrt-sdk/package/
+          mv src/openwrt/libplist openwrt-sdk/package/
+          mv src/openwrt/libusbmuxd openwrt-sdk/package/
+          mv src/openwrt/libimobiledevice openwrt-sdk/package/
+          mv src/openwrt/libimobiledevice-glue openwrt-sdk/package/
+          mv src/openwrt/usbmuxd2 openwrt-sdk/package/
+          rm -rf src/openwrt
+          mv src openwrt-sdk/package/usbmuxd2/src
+          cd openwrt-sdk
+          cp feeds.conf.default feeds.conf
+          ./scripts/feeds update -a > /dev/null
+          make defconfig
+          ./scripts/feeds install -d y -f -a
+          # 删除官方默认旧版软件包
+          ./scripts/feeds uninstall libusbmuxd
+          ./scripts/feeds uninstall libimobiledevice
+          ./scripts/feeds uninstall libplist
+          make package/usbmuxd2/compile V=s
+      - name: Compress build files
+        run: |
+          mkdir artifact
+          mv openwrt-sdk/bin/packages/*/base/usbmuxd*.ipk artifact/
+          mv openwrt-sdk/bin/packages/*/base/libgeneral*.ipk artifact/
+          mv openwrt-sdk/bin/packages/*/base/libplist*.ipk artifact/
+          mv openwrt-sdk/bin/packages/*/base/libimobiledevice*.ipk artifact/
+          mv  openwrt-sdk/bin/packages/*/base/libusbmuxd*.ipk artifact/
+          tar -czvf usbmuxd2-openwrt-${{ matrix.target.arch }}.tar.gz -C artifact .
+      - name: Archive package
+        uses: actions/upload-artifact@v3
+        with:
+          name: usbmuxd2-openwrt-${{ matrix.target.arch }}
+          path: |
+            artifact/*.ipk
+          if-no-files-found: error
+      - name: Upload package to GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: "startsWith(github.ref, 'refs/tags/')"
+        with:
+          files: |
+            usbmuxd2-openwrt-*.tar.gz
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
+          generate_release_notes: true
