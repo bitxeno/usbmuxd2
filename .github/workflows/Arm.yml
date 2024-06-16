@@ -78,6 +78,7 @@ jobs:
         run: |
           export CC=aarch64-linux-gnu-gcc
           export CXX=aarch64-linux-gnu-g++
+          export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
 
           ./autogen.sh --prefix=/usr --disable-static --without-cython --host=aarch64-linux
           make
