@@ -32,8 +32,6 @@ jobs:
 
           export CC=aarch64-linux-gnu-gcc
           export CXX=aarch64-linux-gnu-g++
-          export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
-
 
           git clone https://github.com/libusb/libusb.git -b v1.0.26
           cd libusb
@@ -78,6 +76,9 @@ jobs:
           cd ../../
       - name: Build
         run: |
+          export CC=aarch64-linux-gnu-gcc
+          export CXX=aarch64-linux-gnu-g++
+
           ./autogen.sh --prefix=/usr --disable-static --without-cython --host=aarch64-linux
           make
           sudo checkinstall -y --pkgname=usbmuxd2 --pkgversion=1.0.0 --pkgarch=arm64
