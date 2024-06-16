@@ -5,7 +5,7 @@ on:
 
 jobs:
   linux-aarch64:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target:
@@ -21,7 +21,7 @@ jobs:
       - name: Install build requirements
         run: |
           sudo apt-get install -y pkg-config:arm64 libssl-dev:arm64 libudev-dev:arm64 \ 
-          udev:arm64 libavahi-client-dev:arm64 checkinstall rename
+          udev:arm64 libavahi-client-dev:arm64
       - name: Build dependencies
         run: |
           mkdir build
