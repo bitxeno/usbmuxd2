@@ -21,7 +21,7 @@ jobs:
       - name: Install build requirements
         run: |
           sudo apt-mark showhold
-          sudo apt remove pkg-config libplist
+          sudo apt remove -y pkg-config
           sudo apt install -y pkg-config:arm64 libssl-dev:arm64 libudev-dev:arm64 libavahi-client-dev:arm64 checkinstall rename
       - name: Build dependencies
         run: |
