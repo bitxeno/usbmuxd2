@@ -24,7 +24,7 @@ jobs:
           sudo apt install -y pkg-config checkinstall rename libssl-dev:arm64 libudev-dev:arm64 libavahi-client-dev:arm64
           echo $PKG_CONFIG_PATH
           which pkg-config
-      - run: ls -al /usr/aarch64-linux-gnu/lib/pkgconfig
+      - run: find / -name *avahi-client*
       - name: Build dependencies
         run: |
           mkdir build
