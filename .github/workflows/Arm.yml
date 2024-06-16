@@ -21,7 +21,7 @@ jobs:
           arch: arm64
       - name: Install build requirements
         run: |
-          sudo apt install -y pkg-config libssl-dev:arm64 libudev-dev:arm64 libavahi-client-dev:arm64 checkinstall rename
+          sudo apt install -y pkg-config pkg-config:arm64 libssl-dev:arm64 libudev-dev:arm64 libavahi-client-dev:arm64 checkinstall rename
       - name: Build dependencies
         run: |
           mkdir build
