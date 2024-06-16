@@ -230,7 +230,8 @@ void Muxer::add_device(std::shared_ptr<Device> dev) noexcept{
         }catch (tihmstar::exception &e){
             error("Failed to start WIFIDevice %s with error=%d (%s)",wifidev->_serial,e.code(),e.what());
             _devices.delMember();
-            delete_device(dev);
+            // ignore heartbeat errors to delete device
+            // delete_device(dev);
             return;
         }
     }
