@@ -22,9 +22,6 @@ jobs:
       - name: Install build requirements
         run: |
           sudo apt install -y pkg-config checkinstall rename libssl-dev:arm64 libudev-dev:arm64 libavahi-client-dev:arm64
-          echo $PKG_CONFIG_PATH
-          which pkg-config
-      - run: ls -al /usr/lib/aarch64-linux-gnu/pkgconfig/
       - name: Build dependencies
         run: |
           mkdir build
@@ -32,6 +29,7 @@ jobs:
 
           export CC=aarch64-linux-gnu-gcc
           export CXX=aarch64-linux-gnu-g++
+          export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
 
           git clone https://github.com/libusb/libusb.git -b v1.0.26
           cd libusb
