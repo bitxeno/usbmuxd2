@@ -72,11 +72,3 @@ jobs:
           path: |
             artifact/*.ipk
           if-no-files-found: error
-      - name: Upload package to GitHub Release
-        uses: softprops/action-gh-release@v1
-        if: "startsWith(github.ref, 'refs/tags/')"
-        with:
-          files: |
-            usbmuxd2-openwrt-*.tar.gz
-          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
-          generate_release_notes: true
