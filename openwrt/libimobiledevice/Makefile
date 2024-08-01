@@ -60,11 +60,12 @@ endef
 
 CONFIGURE_ARGS += \
 	--disable-static \
+  --enable-debug \
 	--without-cython
 
 define Build/Prepare
 	rm -rf $(PKG_BUILD_DIR)
-	git clone https://github.com/bitxeno/libimobiledevice.git -b debug  $(PKG_BUILD_DIR)
+	git clone https://github.com/bitxeno/libimobiledevice.git  $(PKG_BUILD_DIR)
 endef
 
 define Build/Configure
