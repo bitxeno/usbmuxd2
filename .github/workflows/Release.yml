@@ -42,11 +42,11 @@ jobs:
           sudo checkinstall -y --pkgname=libgeneral --pkgversion=1.0.0 --pkgarch=amd64
           cd ..
 
-          git clone https://github.com/libimobiledevice/libplist.git -b 2.3.0
+          git clone https://github.com/libimobiledevice/libplist.git -b 2.6.0
           cd libplist
           ./autogen.sh --prefix=/usr 	--disable-static --without-cython
           make
-          sudo checkinstall -y --pkgname=libplist --pkgversion=2.3.0 --pkgarch=amd64
+          sudo checkinstall -y --pkgname=libplist --pkgversion=2.6.0 --pkgarch=amd64
           cd ..
 
           git clone https://github.com/libimobiledevice/libtatsu.git -b 1.0.3
@@ -150,11 +150,11 @@ jobs:
           sudo checkinstall -y --pkgname=libgeneral --pkgversion=1.0.0 --pkgarch=arm64
           cd ..
 
-          git clone https://github.com/libimobiledevice/libplist.git -b 2.3.0
+          git clone https://github.com/libimobiledevice/libplist.git -b 2.6.0
           cd libplist
           ./autogen.sh --prefix=/usr --disable-static --without-cython --host=aarch64-linux
           make
-          sudo checkinstall -y --pkgname=libplist --pkgversion=2.3.0 --pkgarch=arm64
+          sudo checkinstall -y --pkgname=libplist --pkgversion=2.6.0 --pkgarch=arm64
           cd ..
 
           git clone https://github.com/libimobiledevice/libtatsu.git -b 1.0.3
