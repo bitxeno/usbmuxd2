@@ -22,7 +22,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential libssl-dev \
           git automake autoconf libtool \
-          pkg-config libudev-dev udev libavahi-client-dev checkinstall rename
+          pkg-config libudev-dev udev libavahi-client-dev libtatsu-dev checkinstall rename
       - name: Build dependencies
         run: |
           mkdir build

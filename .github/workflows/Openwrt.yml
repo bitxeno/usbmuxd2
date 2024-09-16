@@ -28,7 +28,7 @@ jobs:
           libncursesw5-dev libssl-dev python3 unzip rsync \
           python3-distutils python3-setuptools python3-dev \
           swig time xsltproc zlib1g-dev systemd wget curl \
-          git psmisc automake autoconf libtool
+          git psmisc automake autoconf libtool libtatsu-dev
       - name: Install OpenWrt SDK
         run: |
           set -e
