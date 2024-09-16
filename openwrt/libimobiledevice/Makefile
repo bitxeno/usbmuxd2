@@ -64,7 +64,7 @@ CONFIGURE_ARGS += \
 
 define Build/Prepare
 	rm -rf $(PKG_BUILD_DIR)
-	git clone https://github.com/libimobiledevice/libimobiledevice.git  $(PKG_BUILD_DIR)
+	git clone https://github.com/bitxeno/libimobiledevice.git  $(PKG_BUILD_DIR)
 endef
 
 define Build/Configure
