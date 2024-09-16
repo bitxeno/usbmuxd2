@@ -35,7 +35,7 @@ define Package/libimobiledevice
   $(call Package/libimobiledevice/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libplist +libusbmuxd +libopenssl +libimobiledevice-glue
+  DEPENDS:=+libplist +libusbmuxd +libopenssl +libimobiledevice-glue +libtatsu
   LICENSE:=LGPL-2.1-or-later
   LICENSE_FILES:=COPYING.LESSER
 endef

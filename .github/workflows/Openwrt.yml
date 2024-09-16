@@ -28,7 +28,7 @@ jobs:
           libncursesw5-dev libssl-dev python3 unzip rsync \
           python3-distutils python3-setuptools python3-dev \
           swig time xsltproc zlib1g-dev systemd wget curl \
-          git psmisc automake autoconf libtool libtatsu-dev
+          git psmisc automake autoconf libtool
       - name: Install OpenWrt SDK
         run: |
           set -e
@@ -43,6 +43,7 @@ jobs:
           mv src/openwrt/libusbmuxd openwrt-sdk/package/
           mv src/openwrt/libimobiledevice openwrt-sdk/package/
           mv src/openwrt/libimobiledevice-glue openwrt-sdk/package/
+          mv src/openwrt/libtatsu openwrt-sdk/package/
           mv src/openwrt/usbmuxd2 openwrt-sdk/package/
           rm -rf src/openwrt
           mv src openwrt-sdk/package/usbmuxd2/src
@@ -62,6 +63,7 @@ jobs:
           mv openwrt-sdk/bin/packages/*/base/usbmuxd*.ipk artifact/
           mv openwrt-sdk/bin/packages/*/base/libgeneral*.ipk artifact/
           mv openwrt-sdk/bin/packages/*/base/libplist*.ipk artifact/
+          mv openwrt-sdk/bin/packages/*/base/libtatsu*.ipk artifact/
           mv openwrt-sdk/bin/packages/*/base/libimobiledevice*.ipk artifact/
           mv  openwrt-sdk/bin/packages/*/base/libusbmuxd*.ipk artifact/
           tar -czvf usbmuxd2-openwrt-${{ matrix.target.arch }}.tar.gz -C artifact .

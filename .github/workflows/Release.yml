@@ -22,7 +22,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential libssl-dev \
           git automake autoconf libtool \
-          pkg-config libudev-dev udev libavahi-client-dev libtatsu-dev checkinstall rename
+          pkg-config libudev-dev udev libavahi-client-dev libcurl4-openssl-dev checkinstall rename
       - name: Build dependencies
         run: |
           mkdir build
@@ -47,6 +47,13 @@ jobs:
           ./autogen.sh --prefix=/usr 	--disable-static --without-cython
           make
           sudo checkinstall -y --pkgname=libplist --pkgversion=2.3.0 --pkgarch=amd64
+          cd ..
+
+          git clone https://github.com/libimobiledevice/libtatsu.git -b v1.0.3
+          cd libtatsu
+          ./autogen.sh --prefix=/usr --disable-static
+          make
+          sudo checkinstall -y --pkgname=libtatsu --pkgversion=1.0.3 --pkgarch=amd64
           cd ..
 
           git clone https://github.com/libimobiledevice/libimobiledevice-glue -b 1.3.0
@@ -80,6 +87,7 @@ jobs:
           mv build/libusb/libusb*.deb artifact/
           mv build/libgeneral/libgeneral*.deb artifact/
           mv build/libplist/libplist*.deb artifact/
+          mv build/libtatsu/libtatsu*.deb artifact/
           mv build/libimobiledevice-glue/libimobiledevice-glue*.deb artifact/
           mv build/libusbmuxd/libusbmuxd*.deb artifact/
           mv build/libimobiledevice/libimobiledevice*.deb artifact/
@@ -149,6 +157,13 @@ jobs:
           sudo checkinstall -y --pkgname=libplist --pkgversion=2.3.0 --pkgarch=arm64
           cd ..
 
+          git clone https://github.com/libimobiledevice/libtatsu.git -b v1.0.3
+          cd libtatsu
+          ./autogen.sh --prefix=/usr --disable-static --host=aarch64-linux
+          make
+          sudo checkinstall -y --pkgname=libtatsu --pkgversion=1.0.3 --pkgarch=arm64
+          cd ..
+
           git clone https://github.com/libimobiledevice/libimobiledevice-glue -b 1.0.0
           cd libimobiledevice-glue
           ./autogen.sh --prefix=/usr 	--disable-static --without-cython --host=aarch64-linux
@@ -184,6 +199,7 @@ jobs:
           mv build/libusb/libusb*.deb artifact/
           mv build/libgeneral/libgeneral*.deb artifact/
           mv build/libplist/libplist*.deb artifact/
+          mv build/libtatsu/libtatsu*.deb artifact/
           mv build/libimobiledevice-glue/libimobiledevice-glue*.deb artifact/
           mv build/libusbmuxd/libusbmuxd*.deb artifact/
           mv build/libimobiledevice/libimobiledevice*.deb artifact/
@@ -244,6 +260,7 @@ jobs:
           mv src/openwrt/libplist openwrt-sdk/package/
           mv src/openwrt/libusbmuxd openwrt-sdk/package/
           mv src/openwrt/libimobiledevice openwrt-sdk/package/
+          mv src/openwrt/libtatsu openwrt-sdk/package/
           mv src/openwrt/libimobiledevice-glue openwrt-sdk/package/
           mv src/openwrt/usbmuxd2 openwrt-sdk/package/
           rm -rf src/openwrt
@@ -264,6 +281,7 @@ jobs:
           mv openwrt-sdk/bin/packages/*/base/usbmuxd*.ipk artifact/
           mv openwrt-sdk/bin/packages/*/base/libgeneral*.ipk artifact/
           mv openwrt-sdk/bin/packages/*/base/libplist*.ipk artifact/
+          mv openwrt-sdk/bin/packages/*/base/libtatsu*.ipk artifact/
           mv openwrt-sdk/bin/packages/*/base/libimobiledevice*.ipk artifact/
           mv  openwrt-sdk/bin/packages/*/base/libusbmuxd*.ipk artifact/
           tar -czvf usbmuxd2-openwrt-${{ matrix.target.arch }}.tar.gz -C artifact .
