@@ -49,7 +49,7 @@ jobs:
           sudo checkinstall -y --pkgname=libplist --pkgversion=2.3.0 --pkgarch=amd64
           cd ..
 
-          git clone https://github.com/libimobiledevice/libtatsu.git -b v1.0.3
+          git clone https://github.com/libimobiledevice/libtatsu.git -b 1.0.3
           cd libtatsu
           ./autogen.sh --prefix=/usr --disable-static
           make
@@ -157,7 +157,7 @@ jobs:
           sudo checkinstall -y --pkgname=libplist --pkgversion=2.3.0 --pkgarch=arm64
           cd ..
 
-          git clone https://github.com/libimobiledevice/libtatsu.git -b v1.0.3
+          git clone https://github.com/libimobiledevice/libtatsu.git -b 1.0.3
           cd libtatsu
           ./autogen.sh --prefix=/usr --disable-static --host=aarch64-linux
           make
