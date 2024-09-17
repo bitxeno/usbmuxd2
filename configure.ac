@@ -92,11 +92,11 @@ if test "x$with_limd" == "xyes"; then
         AC_MSG_ERROR([wifi support requested but no wifi backend could not be found])
       fi
     else
-      echo "*** Note: wifi support has been disabled ***"
+      AC_MSG_ERROR([*** Note: wifi support has been disabled ***])
     fi
 
   else
-    echo "*** Note: libimobiledevice support has been disabled ***"
+    AC_MSG_ERROR([*** Note: libimobiledevice support has been disabled ***])
   fi
 else
   if test "x$with_wifi" == "xyes"; then

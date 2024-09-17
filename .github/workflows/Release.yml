@@ -74,7 +74,7 @@ jobs:
           cd libimobiledevice
           ./autogen.sh --prefix=/usr 	--disable-static --without-cython
           make
-          sudo checkinstall -y --pkgname=libimobiledevice --pkgversion=1.3.2 --pkgarch=amd64
+          sudo checkinstall -y --pkgname=libimobiledevice --pkgversion=1.3.1 --pkgarch=amd64
           cd ../../
       - name: Build
         run: |
@@ -182,7 +182,7 @@ jobs:
           cd libimobiledevice
           ./autogen.sh --prefix=/usr 	--disable-static --without-cython --host=aarch64-linux
           make
-          sudo checkinstall -y --pkgname=libimobiledevice --pkgversion=1.3.2 --pkgarch=arm64
+          sudo checkinstall -y --pkgname=libimobiledevice --pkgversion=1.3.1 --pkgarch=arm64
           cd ../../
       - name: Build
         run: |
