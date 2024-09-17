@@ -7,13 +7,11 @@
 
 #include "WIFIDeviceManager.hpp"
 #include <libgeneral/macros.h>
-#ifdef HAVE_WIFI_SUPPORT
 #   ifdef HAVE_WIFI_AVAHI
 #       include "WIFIDeviceManager-avahi.hpp"
 #   elif HAVE_WIFI_MDNS
 #       include "WIFIDeviceManager-mDNS.hpp"
 #   endif //HAVE_AVAHI
-#endif
 
 gref_WIFIDeviceManager::gref_WIFIDeviceManager(WIFIDeviceManager *mgr)
 : _mgr(mgr)

@@ -17,13 +17,11 @@
 #include <arpa/inet.h>
 #include <string.h>
 
-#ifdef HAVE_WIFI_SUPPORT
 #   ifdef HAVE_WIFI_AVAHI
 #       include "Manager/WIFIDeviceManager-avahi.hpp"
 #   elif HAVE_WIFI_MDNS
 #       include "Manager/WIFIDeviceManager-mDNS.hpp"
 #   endif //HAVE_AVAHI
-#endif
 
 
 #define MAXID (INT_MAX/2)
@@ -118,9 +116,7 @@ void Muxer::spawnUSBDeviceManager(){
 }
 
 void Muxer::spawnWIFIDeviceManager(){
-#ifndef HAVE_WIFI_SUPPORT
-    reterror("compiled without wifi support");
-#else
+#ifdef HAVE_WIFI_AVAHI || HAVE_WIFI_MDNS
     assure(!_wifidevmgr);
     _wifidevmgr = new WIFIDeviceManager(_ref);
     _wifidevmgr->startLoop();
@@ -224,7 +220,6 @@ void Muxer::add_device(std::shared_ptr<Device> dev) noexcept{
         return;
     }
 
-#ifdef HAVE_WIFI_SUPPORT
     if (dev->_conntype == Device::MUXCONN_WIFI){
         std::shared_ptr<WIFIDevice> wifidev = std::static_pointer_cast<WIFIDevice>(dev);
         try{
@@ -239,7 +234,6 @@ void Muxer::add_device(std::shared_ptr<Device> dev) noexcept{
             return;
         }
     }
-#endif //HAVE_WIFI_SUPPORT
 
 
 #ifdef HAVE_LIBIMOBILEDEVICE
