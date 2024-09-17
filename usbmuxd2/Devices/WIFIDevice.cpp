@@ -23,12 +23,17 @@ WIFIDevice::WIFIDevice(std::string uuid, std::string ipaddr, std::string service
 }
 
 WIFIDevice::~WIFIDevice() {
+    #ifdef HAVE_LIBIMOBILEDEVICE
     safeFreeCustom(_hbclient, heartbeat_client_free);
+    #endif
     safeFreeCustom(_hbrsp, plist_free);
     safeFreeCustom(_idev, idevice_free);
 }
 
 void WIFIDevice::loopEvent(){
+#ifndef HAVE_LIBIMOBILEDEVICE
+    reterror("Compiled without libimobiledevice");
+#else
     plist_t hbeat = NULL;
     cleanup([&]{
         safeFreeCustom(hbeat, plist_free);
@@ -37,6 +42,7 @@ void WIFIDevice::loopEvent(){
 
 	retassure((hret = heartbeat_receive_with_timeout(_hbclient,&hbeat,15000)) == HEARTBEAT_E_SUCCESS, "[WIFIDevice] failed to recv heartbeat with error=%d",hret);
     retassure((hret = heartbeat_send(_hbclient,_hbrsp)) == HEARTBEAT_E_SUCCESS,"[WIFIDevice] failed to send heartbeat");
+#endif //HAVE_LIBIMOBILEDEVICE
 }
 
 void WIFIDevice::beforeLoop(){
@@ -49,6 +55,9 @@ void WIFIDevice::kill() noexcept{
 }
 
 void WIFIDevice::startLoop(){
+#ifndef HAVE_LIBIMOBILEDEVICE
+    reterror("Compiled without libimobiledevice");
+#else
     heartbeat_error_t hret = HEARTBEAT_E_SUCCESS;
     _loopState = tihmstar::LOOP_STOPPED;
     
@@ -61,6 +70,7 @@ void WIFIDevice::startLoop(){
 
 	_loopState = tihmstar::LOOP_UNINITIALISED;
     Manager::startLoop();
+#endif //HAVE_LIBIMOBILEDEVICE
 }
 
 
