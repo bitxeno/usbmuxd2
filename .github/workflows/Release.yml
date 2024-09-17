@@ -164,11 +164,11 @@ jobs:
           sudo checkinstall -y --pkgname=libtatsu --pkgversion=1.0.3 --pkgarch=arm64
           cd ..
 
-          git clone https://github.com/libimobiledevice/libimobiledevice-glue -b 1.0.0
+          git clone https://github.com/libimobiledevice/libimobiledevice-glue -b 1.3.0
           cd libimobiledevice-glue
           ./autogen.sh --prefix=/usr 	--disable-static --without-cython --host=aarch64-linux
           make
-          sudo checkinstall -y --pkgname=libimobiledevice-glue --pkgversion=1.0.0 --pkgarch=arm64
+          sudo checkinstall -y --pkgname=libimobiledevice-glue --pkgversion=1.3.0 --pkgarch=arm64
           cd ..
 
           git clone https://github.com/bitxeno/libusbmuxd.git

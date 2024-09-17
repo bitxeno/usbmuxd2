@@ -96,7 +96,7 @@ Muxer::~Muxer(){
 
     safeDelete(_climgr);
     safeDelete(_usbdevmgr);
-#if defined(HAVE_WIFI_AVAHI) || defined(HAVE_WIFI_MDNS)
+#ifdef HAVE_WIFI_SUPPORT
     safeDelete(_wifidevmgr);
 #endif
     _finalUnrefEvent.wait(); //wait until no more references to this object exist
