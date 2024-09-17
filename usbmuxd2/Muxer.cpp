@@ -120,6 +120,8 @@ void Muxer::spawnWIFIDeviceManager(){
     assure(!_wifidevmgr);
     _wifidevmgr = new WIFIDeviceManager(_ref);
     _wifidevmgr->startLoop();
+#else
+    reterror("Compiled without wifi support");
 #endif
 }
 
