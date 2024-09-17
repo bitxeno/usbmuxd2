@@ -25,9 +25,9 @@ WIFIDevice::WIFIDevice(std::string uuid, std::string ipaddr, std::string service
 WIFIDevice::~WIFIDevice() {
     #ifdef HAVE_LIBIMOBILEDEVICE
     safeFreeCustom(_hbclient, heartbeat_client_free);
+    safeFreeCustom(_idev, idevice_free);
     #endif
     safeFreeCustom(_hbrsp, plist_free);
-    safeFreeCustom(_idev, idevice_free);
 }
 
 void WIFIDevice::loopEvent(){
