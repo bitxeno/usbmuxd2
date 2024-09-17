@@ -20,7 +20,9 @@ gref_WIFIDeviceManager::gref_WIFIDeviceManager(WIFIDeviceManager *mgr)
 }
 
 gref_WIFIDeviceManager::~gref_WIFIDeviceManager(){
+#if defined(HAVE_WIFI_AVAHI) || defined(HAVE_WIFI_MDNS)
     _mgr->_finalUnrefEvent.notifyAll();
+#endif
 }
 
 WIFIDeviceManager *gref_WIFIDeviceManager::operator->(){
