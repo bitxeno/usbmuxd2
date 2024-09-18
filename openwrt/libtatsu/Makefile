@@ -37,7 +37,7 @@ define Package/libtatsu
   $(call Package/libtatsu/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libplist +libcurl
+  DEPENDS:=+libplist +libcurl +mbedtls
   TITLE+= library
   PKG_LICENSE:=LGPL-2.1-or-later
   PKG_LICENSE_FILES:=COPYING.LESSER
