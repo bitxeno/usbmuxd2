@@ -2,6 +2,7 @@ name: Openwrt
 
 on:
   workflow_dispatch:
+  push:
 
 jobs:
   openwrt:
@@ -28,7 +29,7 @@ jobs:
           libncursesw5-dev libssl-dev python3 unzip rsync \
           python3-distutils python3-setuptools python3-dev \
           swig time xsltproc zlib1g-dev systemd wget curl \
-          git psmisc automake autoconf libtool
+          git psmisc automake autoconf libtool libcurl4-openssl-dev
       - name: Install OpenWrt SDK
         run: |
           set -e
@@ -40,10 +41,10 @@ jobs:
           set -e
           mv src/openwrt/libgeneral openwrt-sdk/package/
           mv src/openwrt/libplist openwrt-sdk/package/
+          mv src/openwrt/libtatsu openwrt-sdk/package/
           mv src/openwrt/libusbmuxd openwrt-sdk/package/
           mv src/openwrt/libimobiledevice openwrt-sdk/package/
           mv src/openwrt/libimobiledevice-glue openwrt-sdk/package/
-          mv src/openwrt/libtatsu openwrt-sdk/package/
           mv src/openwrt/usbmuxd2 openwrt-sdk/package/
           rm -rf src/openwrt
           mv src openwrt-sdk/package/usbmuxd2/src

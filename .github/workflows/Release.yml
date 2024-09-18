@@ -224,7 +224,7 @@ jobs:
 
   openwrt:
     name: OpenWrt Package - ${{ matrix.target.arch }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     environment: OpenWrt
     strategy:
       fail-fast: false
@@ -258,9 +258,9 @@ jobs:
           set -e
           mv src/openwrt/libgeneral openwrt-sdk/package/
           mv src/openwrt/libplist openwrt-sdk/package/
+          mv src/openwrt/libtatsu openwrt-sdk/package/
           mv src/openwrt/libusbmuxd openwrt-sdk/package/
           mv src/openwrt/libimobiledevice openwrt-sdk/package/
-          mv src/openwrt/libtatsu openwrt-sdk/package/
           mv src/openwrt/libimobiledevice-glue openwrt-sdk/package/
           mv src/openwrt/usbmuxd2 openwrt-sdk/package/
           rm -rf src/openwrt
