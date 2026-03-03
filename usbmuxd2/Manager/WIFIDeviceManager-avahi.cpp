@@ -43,7 +43,7 @@ WIFIDeviceManager::WIFIDeviceManager(std::shared_ptr<gref_Muxer> mux)
     assure(!err);
 
 	assure(_avahi_sb = avahi_service_browser_new(_avahi_client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_apple-mobdev2._tcp", NULL, (AvahiLookupFlags)0, avahi_browse_callback, _wifi_cb_refarg));
-    assure(_avahi_pairable_sb = avahi_service_browser_new(_avahi_client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_apple-pairable._tcp", NULL, (AvahiLookupFlags)0, avahi_browse_callback, _wifi_cb_refarg));
+    assure(_avahi_pairable_sb = avahi_service_browser_new(_avahi_client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_remotepairing-manual-pairing._tcp", NULL, (AvahiLookupFlags)0, avahi_browse_callback, _wifi_cb_refarg));
     debug("WIFIDeviceManager created avahi service_browser");
 }
 
@@ -143,7 +143,7 @@ void avahi_resolve_callback(AvahiServiceResolver *r, AvahiIfIndex interface, Ava
             bool paired = false;
 
             try{
-                if (strcmp(type, "_apple-pairable._tcp") == 0) {
+                if (strcmp(type, "_remotepairing-manual-pairing._tcp") == 0) {
                     // AppleTV wireless pairable uuid
                     uuid = "fff" + macAddr + "fff";
                 } else {

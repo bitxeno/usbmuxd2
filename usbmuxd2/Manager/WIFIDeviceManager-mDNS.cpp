@@ -50,7 +50,7 @@ void resolve_reply(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfac
     bool paired = false;
 
     try{
-        if (fullname.find("_apple-pairable._tcp") != std::string::npos) {
+        if (fullname.find("_remotepairing-manual-pairing._tcp") != std::string::npos) {
             // AppleTV wireless pairable uuid
             uuid = "fff" + macAddr + "fff";
         } else {
@@ -132,7 +132,7 @@ WIFIDeviceManager::WIFIDeviceManager(std::shared_ptr<gref_Muxer> mux)
     debug("WIFIDeviceManager mDNS-client");
     assure(_wifi_cb_refarg = new std::shared_ptr<gref_WIFIDeviceManager>(_ref));
     assure(!(err = DNSServiceBrowse(&_client, 0, kDNSServiceInterfaceIndexAny, "_apple-mobdev2._tcp", "", browse_reply, _wifi_cb_refarg)));
-    assure(!(err = DNSServiceBrowse(&_client, 0, kDNSServiceInterfaceIndexAny, "_apple-pairable._tcp", "", browse_reply, _wifi_cb_refarg)));
+    assure(!(err = DNSServiceBrowse(&_client, 0, kDNSServiceInterfaceIndexAny, "_remotepairing-manual-pairing._tcp", "", browse_reply, _wifi_cb_refarg)));
 
     assure((_dns_sd_fd = DNSServiceRefSockFD(_client))>0);
 
