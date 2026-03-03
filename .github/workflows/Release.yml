@@ -95,7 +95,7 @@ jobs:
           rename "s/amd64/${{ matrix.target.arch }}/" ./artifact/*
           tar -czvf usbmuxd2-ubuntu-${{ matrix.target.arch }}.tar.gz -C artifact .
       - name: Archive package
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: usbmuxd2-ubuntu-${{ matrix.target.arch }}
           path: |
@@ -207,7 +207,7 @@ jobs:
           rename "s/arm64/${{ matrix.target.arch }}/" ./artifact/*
           tar -czvf usbmuxd2-ubuntu-${{ matrix.target.arch }}.tar.gz -C artifact .
       - name: Archive package
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: usbmuxd2-ubuntu-${{ matrix.target.arch }}
           path: |
@@ -286,7 +286,7 @@ jobs:
           mv  openwrt-sdk/bin/packages/*/base/libusbmuxd*.ipk artifact/
           tar -czvf usbmuxd2-openwrt-${{ matrix.target.arch }}.tar.gz -C artifact .
       - name: Archive package
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: usbmuxd2-openwrt-${{ matrix.target.arch }}
           path: |
