@@ -42,6 +42,18 @@ void resolve_reply(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfac
     struct hostent *he = NULL;
     std::string ipaddr = hosttarget;
 
+    if (inet_addr(ipaddr.c_str()) == 0xffffffff) {
+        cretassure(he = gethostbyname(ipaddr.c_str()), "failed to get hostbyname");
+        struct in_addr **addr_list = (struct in_addr **) he->h_addr_list;
+
+        for(int i = 0; addr_list[i] != NULL; i++){
+            if(const char *ipv4addr_str=inet_ntoa(*addr_list[i])){
+                ipaddr = ipv4addr_str;
+                break;
+            }
+        }
+    }
+
 
     debug("Service '%s' at '%s':\n", fullname, hosttarget);
     std::string serviceName{fullname};
@@ -52,30 +64,20 @@ void resolve_reply(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfac
     try{
         if (fullname.find("_remotepairing-manual-pairing._tcp") != std::string::npos) {
             // AppleTV wireless pairable uuid
-            uuid = "fff" + macAddr + "fff";
+            uuid = serviceName.substr(0,serviceName.find(".")) + "-pairable";
+            macAddr = {};
+            if ((*(*devmgr)->_mux)->have_wifi_device_with_ip(ipaddr)) goto error;
         } else {
             uuid = sysconf_udid_for_macaddr(macAddr);
             paired = true;
+            if ((*(*devmgr)->_mux)->have_wifi_device(macAddr)) goto error;
         }
     }catch (tihmstar::exception &e){
         creterror("failed to find uuid for mac=%s with error=%d (%s)",macAddr.c_str(),e.code(),e.what());
     }
 
-    if (!(*(*devmgr)->_mux)->have_wifi_device(macAddr, paired)) {
+    {
         // found new device
-
-        if (inet_addr(ipaddr.c_str()) == 0xffffffff) {
-            cretassure(he = gethostbyname(ipaddr.c_str()), "failed to get hostbyname");
-            struct in_addr **addr_list = (struct in_addr **) he->h_addr_list;
-
-            for(int i = 0; addr_list[i] != NULL; i++){
-                if(const char *ipv4addr_str=inet_ntoa(*addr_list[i])){
-                    ipaddr = ipv4addr_str;
-                    break;
-                }
-            }
-        }
-
         try{
             dev = std::make_shared<WIFIDevice>(uuid, ipaddr.c_str(), serviceName, paired, (*devmgr)->_mux);
             (*devmgr)->device_add(dev); dev = NULL;

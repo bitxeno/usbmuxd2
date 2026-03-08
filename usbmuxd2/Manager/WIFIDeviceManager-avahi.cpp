@@ -145,17 +145,20 @@ void avahi_resolve_callback(AvahiServiceResolver *r, AvahiIfIndex interface, Ava
             try{
                 if (strcmp(type, "_remotepairing-manual-pairing._tcp") == 0) {
                     // AppleTV wireless pairable uuid
-                    uuid = "fff" + macAddr + "fff";
+                    uuid = serviceName.substr(0,serviceName.find(".")) + "-pairable";
+                    macAddr = {};
+                    if ((*(*devmgr)->_mux)->have_wifi_device_with_ip(addr)) goto error;
                 } else {
                     uuid = sysconf_udid_for_macaddr(macAddr);
                     paired = true;
+                    if ((*(*devmgr)->_mux)->have_wifi_device(macAddr)) goto error;
                 }
             }catch (tihmstar::exception &e){
                 debug("failed to find uuid for mac=%s with error=%d (%s)",macAddr.c_str(),e.code(),e.what());
                 break;
             }
 
-            if (!(*(*devmgr)->_mux)->have_wifi_device(macAddr, paired)) {
+            {
                 // found new device
                 serviceName += ".";
                 serviceName += type;

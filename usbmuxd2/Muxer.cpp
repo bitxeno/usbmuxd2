@@ -306,12 +306,27 @@ bool Muxer::have_usb_device(uint8_t bus, uint8_t address) noexcept{
     return false;
 }
 
-bool Muxer::have_wifi_device(std::string macaddr, bool paired) noexcept{
+bool Muxer::have_wifi_device(std::string macaddr) noexcept{
     _devices.addMember();
     for (auto dev : _devices._elems){
         if (dev->_conntype == Device::MUXCONN_WIFI) {
             std::shared_ptr<WIFIDevice> wifidev = std::static_pointer_cast<WIFIDevice>(dev);
-            if (wifidev->_serviceName.substr(0,wifidev->_serviceName.find("@")) == macaddr && wifidev->_paired == paired) {
+            if (wifidev->_serviceName.substr(0,wifidev->_serviceName.find("@")) == macaddr && wifidev->_paired) {
+                _devices.delMember();
+                return true;
+            }
+        }
+    }
+    _devices.delMember();
+    return false;
+}
+
+bool Muxer::have_wifi_device_with_ip(std::string ipaddr) noexcept{
+    _devices.addMember();
+    for (auto dev : _devices._elems){
+        if (dev->_conntype == Device::MUXCONN_WIFI) {
+            std::shared_ptr<WIFIDevice> wifidev = std::static_pointer_cast<WIFIDevice>(dev);
+            if (strcmp(ipaddr.c_str(), wifidev->_ipaddr.c_str()) == 0 && !wifidev->_paired) {
                 _devices.delMember();
                 return true;
             }
@@ -473,7 +488,7 @@ void Muxer::notify_device_paired(int deviceID) noexcept{
 
 void Muxer::notify_device_wifi_paired(std::string uuid, std::string macaddr) noexcept{
     // check if the device is already paired
-    if (have_wifi_device(macaddr, true)) {
+    if (have_wifi_device(macaddr)) {
         return;
     }
 
