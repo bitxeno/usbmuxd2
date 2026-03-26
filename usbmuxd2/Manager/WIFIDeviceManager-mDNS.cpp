@@ -64,7 +64,7 @@ void resolve_reply(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfac
     try{
         if (fullname.find("_remotepairing-manual-pairing._tcp") != std::string::npos) {
             // AppleTV wireless pairable uuid
-            uuid = serviceName.substr(0,serviceName.find(".")) + "-pairable";
+            uuid = serviceName.substr(0,serviceName.find(".")) + "-" + ipaddr;
             macAddr = {};
             if ((*(*devmgr)->_mux)->have_wifi_device_with_ip(ipaddr)) goto error;
         } else {

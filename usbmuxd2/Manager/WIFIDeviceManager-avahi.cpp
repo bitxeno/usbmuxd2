@@ -144,8 +144,8 @@ void avahi_resolve_callback(AvahiServiceResolver *r, AvahiIfIndex interface, Ava
 
             try{
                 if (strcmp(type, "_remotepairing-manual-pairing._tcp") == 0) {
-                    // AppleTV wireless pairable uuid
-                    uuid = serviceName.substr(0,serviceName.find(".")) + "-pairable";
+                    // AppleTV wireless pairable uuid — include addr to make uuid unique per IP
+                    uuid = serviceName.substr(0,serviceName.find(".")) + "-" + std::string(addr);
                     macAddr = {};
                     if ((*(*devmgr)->_mux)->have_wifi_device_with_ip(addr)) goto error;
                 } else {
